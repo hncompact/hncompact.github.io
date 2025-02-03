@@ -1,4 +1,4 @@
-# HN SuperCompact
+# HN SuperCompact UI
 
 A userscript for ViolentMonkey or TamperMonkey that makes the HN UI even more compact.
 
