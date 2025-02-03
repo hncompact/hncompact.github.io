@@ -8,6 +8,8 @@
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
 // @run-at      document-end
+// @include     *
+// @icon        https://hncompact.github.io/favicon.ico
 // ==/UserScript==
 
 let $ = (s) => document.querySelector(s);
