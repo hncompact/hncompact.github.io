@@ -7,11 +7,10 @@ Installation:
   - OpenUserJS: [https://openuserjs.org/scripts/hncompact/HN_SuperCompact](https://openuserjs.org/scripts/hncompact/HN_SuperCompact)
   - From source: [hncompact.user.js](hncompact.user.js)
 
-The front page:
+## The Front Page
 
 ![posts](hn1.jpg)
 
-The comments page:
+## The Comments Page
 
 ![comments](hn2.jpg)
-
