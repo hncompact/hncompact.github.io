@@ -9,9 +9,9 @@ Installation:
 
 The front page:
 
-![](hn1.jpg)
+![posts](hn1.jpg)
 
 The comments page:
 
-![](hn2.jpg)
+![comments](hn2.jpg)
 
