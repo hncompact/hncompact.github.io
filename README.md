@@ -4,7 +4,11 @@ Installation:
 
   - OpenUserJS: https://openuserjs.org/scripts/hncompact/HN_SuperCompact
 
+The front page:
+
 ![](hn1.jpg)
+
+The comments page:
 
 ![](hn2.jpg)
 
