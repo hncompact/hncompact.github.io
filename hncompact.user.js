@@ -9,6 +9,28 @@
 // @run-at      document-end
 // ==/UserScript==
 
+let POSTS_CSS = `
+  <style>
+  .votelinks a { display:none }
+  tr.submission .votelinks center { min-width:1em }
+  tr.submission.recent .votelinks center::before { content:'*'; color:#6f0; }
+  tr.submission + tr { display:none }
+  tr.submission td:not(:last-child) { line-height:2em; font-size:8pt; white-space:nowrap; text-align:right; vertical-align:top; }
+  tr.submission td:first-child a { text-decoration:underline }
+  tr.submission .titleline .sitebit { display:none }
+  </style>
+`;
+
+let COMMENTS_CSS = `
+  <style>
+  tr.comtr .votelinks a { display:none }
+  tr.comtr .reply { font-size:8pt; opacity:0.5; }
+  td.ind[indent="0"] + .votelinks + .default .commtext::first-letter { text-decoration:underline }
+  tr.comtr.recent .votelinks center::before { content:'*'; color:#6f0 !important; }
+  tr.comtr .default > *:not(.comment) { display:none }
+  </style>
+`;
+
 let $ = (s) => document.querySelector(s);
 let $$ = (s) => document.querySelectorAll(s);
 
@@ -18,25 +40,20 @@ else
   document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  if (location.pathname == '/news')
-    initPosts();
-  if (location.pathname == '/item')
-    initComments();
+  switch (location.pathname) {
+    case '/':
+    case '/news':
+      initPosts();
+      break;
+    case '/item':
+      initComments();
+      break;
+  }
 }
 
 function initPosts() {
   console.debug('Compacting the list of posts...');
-
-  document.head.insertAdjacentHTML('beforeend',`
-    <style>
-    .votelinks a { display:none }
-    tr.submission.recent .votelinks center::before { content:'*'; color:#6f0; }
-    tr.submission + tr { display:none }
-    tr.submission td:not(:last-child) { line-height:2em; font-size:8pt; white-space:nowrap; text-align:right; vertical-align:top; }
-    tr.submission td:first-child a { text-decoration:underline }
-    tr.submission .titleline .sitebit { display:none }
-    </style>
-  `);
+  document.head.insertAdjacentHTML('beforeend', POSTS_CSS);
 
   for (let tr of $$('tr.submission')) {
     //console.debug('tr.id=' + tr.id);
@@ -64,16 +81,7 @@ function initPosts() {
 
 function initComments() {
   console.debug('Compacting the list of comments...');
-
-  document.head.insertAdjacentHTML('beforeend',`
-    <style>
-    tr.comtr .votelinks a { display:none }
-    tr.comtr .reply { font-size:8pt; opacity:0.5; }
-    td.ind[indent="0"] + .votelinks + .default .commtext::first-letter { text-decoration:underline }
-    tr.comtr.recent .votelinks center::before { content:'*'; color:#6f0 !important; }
-    tr.comtr .default > *:not(.comment) { display:none }
-    </style>
-  `);
+  document.head.insertAdjacentHTML('beforeend', COMMENTS_CSS);
 
   for (let tr of $$('tr.comtr')) {
     //console.debug('tr.id=' + tr.id);
