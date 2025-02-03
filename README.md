@@ -5,6 +5,7 @@ A userscript for ViolentMonkey or TamperMonkey that makes the HN UI even more co
 Installation:
 
   - OpenUserJS: https://openuserjs.org/scripts/hncompact/HN_SuperCompact
+  - From source: [hncompact.user.js](hncompact.user.js)
 
 The front page:
 
