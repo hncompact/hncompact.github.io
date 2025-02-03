@@ -1,6 +1,5 @@
 // ==UserScript==
 // @name        HN SuperCompact
-// @namespace   Violentmonkey Scripts
 // @match       https://news.ycombinator.com/*
 // @grant       none
 // @version     1.0
@@ -8,8 +7,6 @@
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
 // @run-at      document-end
-// @include     *
-// @icon        https://hncompact.github.io/favicon.ico
 // ==/UserScript==
 
 let $ = (s) => document.querySelector(s);
