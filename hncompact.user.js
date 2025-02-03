@@ -2,7 +2,7 @@
 // @name        HN SuperCompact
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.0
+// @version     1.1
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
