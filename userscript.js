@@ -6,6 +6,8 @@
 // @version     1.0
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
+// @license     MIT
+// @run-at      document-end
 // ==/UserScript==
 
 let $ = (s) => document.querySelector(s);
