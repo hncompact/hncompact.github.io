@@ -2,7 +2,7 @@
 // @name        HN SuperCompact
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.1
+// @version     1.2
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
@@ -23,11 +23,15 @@ let POSTS_CSS = `
 
 let COMMENTS_CSS = `
   <style>
+  tr.comtr .votelinks center { min-width:1em }
   tr.comtr .votelinks a { display:none }
-  tr.comtr .reply { font-size:8pt; opacity:0.5; }
+  tr.comtr:not(.coll) .reply { font-size:8pt; opacity:0.5; }
   td.ind[indent="0"] + .votelinks + .default .commtext::first-letter { text-decoration:underline }
   tr.comtr.recent .votelinks center::before { content:'*'; color:#6f0 !important; }
   tr.comtr .default > *:not(.comment) { display:none }
+  tr.comtr.coll .comment.noshow { display:inherit }
+  tr.comtr.coll .comment.noshow .commtext { display:none }
+  tr.comtr.coll .comment.noshow .reply > p > *:not(.comhead) { display:none }
   </style>
 `;
 
