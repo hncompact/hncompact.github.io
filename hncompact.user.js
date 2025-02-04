@@ -2,7 +2,7 @@
 // @name        HN SuperCompact UI
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.6
+// @version     1.7
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
@@ -79,8 +79,13 @@ function initPosts() {
     let link = tr2.querySelector('a:last-child');
     link.remove();
     link.textContent = '';
-    link.append('+' + score + ':', bcomms, '-' + time, units[0]||'');
+    link.append(score, ':', bcomms);
     td1.append(link);
+
+    let span = document.createElement('span');
+    span.className = 'comhead';
+    span.append(' ', time, units[0]||'');
+    tr.querySelector('.titleline').append(span);
 
     for (let a of tr.querySelectorAll('.votelinks a'))
       a.remove();
