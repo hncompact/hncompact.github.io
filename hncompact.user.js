@@ -2,7 +2,7 @@
 // @name        HN SuperCompact UI
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.8
+// @version     1.9
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
@@ -18,7 +18,7 @@ let POSTS_CSS = `
   tr.submission + tr { display:none }
   tr.submission td:not(:last-child) { font-size:8pt; line-height:14pt; white-space:nowrap; text-align:right; vertical-align:top; }
   tr.submission td:first-child a:hover { text-decoration:underline }
-  tr.submission .titleline .sitebit {  }
+  tr.submission .titleline .sitebit { display:none }
   </style>
 `;
 
@@ -28,7 +28,8 @@ let COMMS_CSS = `
   tr.comtr .votelinks a { display:none }
   tr.comtr .reply .expand { cursor:pointer; color:#fff; }
   tr.comtr .reply .expand b { font-weight:normal; color:#f60; }
-  tr.comtr:not(.coll) .reply { font-size:8pt; opacity:0.5; }
+  tr.comtr:not(.coll) .reply * { font-size:8pt }
+  tr.comtr:not(.coll) .reply > p > *:not(.expand) { opacity:0.5 }
   tr.comtr.recent .votelinks center::before { content:'*'; color:#6f0 !important; }
   tr.comtr .default > *:not(.comment) { display:none }
   tr.comtr .reply a { color:#444 }
@@ -87,10 +88,10 @@ function initPosts() {
     link.append(score, ':', bcomms);
     td1.append(link);
 
-    let span = document.createElement('span');
-    span.className = 'comhead';
-    span.append(' ', time, units[0]||'');
-    tr.querySelector('.titleline').append(span);
+    //let span = document.createElement('span');
+    //span.className = 'comhead';
+    //span.append(' ', time, units[0]||'');
+    //tr.querySelector('.titleline').append(span);
 
     for (let a of tr.querySelectorAll('.votelinks a'))
       a.remove();
