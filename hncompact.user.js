@@ -2,7 +2,7 @@
 // @name        HN SuperCompact UI
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.9
+// @version     1.10
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
@@ -13,6 +13,7 @@ let POSTS_CSS = `
   <style>
   .votelinks a { display:none }
   tr.submission a b { font-weight:normal; color:#f60; }
+  tr.submission .votelinks { min-width:0 }
   tr.submission .votelinks center { min-width:1em }
   tr.submission.recent .votelinks center::before { content:'*'; color:#6f0; }
   tr.submission + tr { display:none }
@@ -26,6 +27,7 @@ let COMMS_CSS = `
   <style>
   tr.comtr .votelinks center { min-width:1em }
   tr.comtr .votelinks a { display:none }
+  tr.comtr .reply .expand:not(:empty) { margin-right:0.5em }
   tr.comtr .reply .expand { cursor:pointer; color:#fff; }
   tr.comtr .reply .expand b { font-weight:normal; color:#f60; }
   tr.comtr:not(.coll) .reply * { font-size:8pt }
@@ -141,7 +143,6 @@ function initComments() {
 
     let counter = document.createElement('u');
     counter.classList.add('expand');
-    counter.textContent = '0:0';
     reply.prepend(counter);
   }
 
