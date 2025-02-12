@@ -2,7 +2,7 @@
 // @name        Text Anchor UI
 // @match       *://*/*
 // @grant       none
-// @version     1.0
+// @version     1.1
 // @author      none
 // @description Basic UI to create text anchors.
 // @license     MIT
@@ -13,9 +13,9 @@ let CUSTOM_CSS = `
   .text-anchor-ui {
     z-index: 1000;
     position: fixed;
-    font-size: 10pt;
-    right: 1em;
-    bottom: 1em;
+    font-size: 40pt;
+    right: 0.5em;
+    bottom: 0.5em;
     border-radius: 1em;
     background: #fc0;
     border: 1px solid #fc0;
