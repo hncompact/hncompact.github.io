@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name        Text Anchor UI
+// @name        Text Fragment UI
 // @match       *://*/*
 // @grant       none
 // @version     1.1
 // @author      none
-// @description Basic UI to create text anchors.
+// @description Basic UI to create text fragments.
 // @license     MIT
 // @run-at      document-end
 // ==/UserScript==
