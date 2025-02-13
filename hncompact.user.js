@@ -2,7 +2,7 @@
 // @name        HN SuperCompact UI
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.11
+// @version     1.12
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
@@ -11,13 +11,11 @@
 
 let POSTS_CSS = `
   <style>
-  tr.spacer { display:none }
   .votelinks a { display:none }
   tr.submission a b { font-weight:normal; color:#f60; }
   tr.submission .votelinks { min-width:0 }
   tr.submission .votelinks center { min-width:1em }
   tr.submission.local .votelinks center::before { content:'*'; color:#6f0; }
-  tr.submission .votelinks center font { display:none }
   tr.submission + tr { display:none }
   tr.submission td:not(:last-child) { font-size:8pt; line-height:14pt; white-space:nowrap; text-align:right; vertical-align:top; }
   tr.submission td:first-child a:hover { text-decoration:underline }
@@ -27,6 +25,7 @@ let POSTS_CSS = `
 
 let COMMS_CSS = `
   <style>
+  tr.comtr .votelinks center font { display:none }
   tr.comtr .votelinks center { min-width:1em }
   tr.comtr .votelinks a { display:none }
   tr.comtr .reply .expand:not(:empty) { margin-right:0.5em }
