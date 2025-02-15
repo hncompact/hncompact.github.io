@@ -2,7 +2,7 @@
 // @name        HN SuperCompact UI
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.12
+// @version     1.13
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
@@ -131,7 +131,7 @@ function initComments() {
     let age = reply.querySelector('.age a');
     if (age) {
       let [time, units=''] = age.textContent.split(' ');
-      age.textContent = '-' + time + units[0];
+      age.textContent = time + units[0];
       if (units.match(/minute/))
         tr.classList.add('recent');
     }
