@@ -3,7 +3,7 @@
 // @match       *://*/*
 // @grant       GM.setValue
 // @grant       GM.getValue
-// @version     1.5
+// @version     1.6
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
@@ -33,7 +33,7 @@ const CUSTOM_CSS = `
     z-index: 1000;
     position: fixed;
     font-size: 1vh;
-    right: 0vh;
+    right: 0.5vh;
     bottom: 1vh;
     opacity: 0.5;
     transition: all 150ms;
