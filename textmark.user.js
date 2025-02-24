@@ -3,7 +3,7 @@
 // @match       *://*/*
 // @grant       GM.setValue
 // @grant       GM.getValue
-// @version     1.4
+// @version     1.5
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
@@ -33,21 +33,20 @@ const CUSTOM_CSS = `
     z-index: 1000;
     position: fixed;
     font-size: 1vh;
-    right: 1vh;
+    right: 0vh;
     bottom: 1vh;
-    opacity: 0.25;
+    opacity: 0.5;
     transition: all 150ms;
   }
 
   .text-frag-ui:hover {
-    opacity: 1.0;
+    opacity: 1;
   }
 
   .text-frag-ui a {
     user-select: none;
     color: #000;
     font-weight: bold;
-    filter: hue-rotate(0deg);
     cursor: pointer;
     text-decoration: none;
     width: 5vh;
@@ -96,6 +95,7 @@ async function init() {
   link.append(span);
   uiroot.append(link);
   document.body.append(uiroot);
+
   setLinkText('↺');
 
   /*let url = new URL(location.href);
@@ -110,25 +110,14 @@ async function init() {
 
   link.onclick = async () => {
     try {
-      //navigator.clipboard?.writeText(link.href);
-      let sel = document.getSelection();
-      if (!sel) return;
-      let str = sel.toString().trim();
-      if (!str) return;
-      console.log('Selection:', str);
-      let r = sel.getRangeAt(0);
-      highlightRange(r);
-      sel.empty();
+      await addSelectionToBookmarks(bookmarks);
       setLinkText(++highlights);
-      bookmarks.push(str);
-      await saveLocalBookmarks(bookmarks);
     } catch (e) {
       setLinkText('!', 'data:,' + encodeURIComponent(e + ''));
       console.error(e);
     }
   };
 
-  highlights = highlightBookmarks(bookmarks);
   for (let [bgcolor, href] of WWW_SOURCES) {
     try {
       let texts = await pullRemoteBookmarks(href);
@@ -137,7 +126,34 @@ async function init() {
       console.warn(e);
     }
   }
+
+  highlights += highlightBookmarks(bookmarks);
   setLinkText(highlights);
+
+  if (highlights.length)
+    uiroot.style.opacity = 1;
+}
+
+function serializeBookmarksToDataURI(bookmarks) {
+  let text = serializeBookmarksToText(bookmarks);
+  return 'data:text/plain;charset=UTF-8,' + encodeURIComponent(text);
+}
+
+function serializeBookmarksToText(bookmarks) {
+  return bookmarks.map(b => '> ' + b).join('\n\n');
+}
+
+async function addSelectionToBookmarks(bookmarks) {
+  let sel = document.getSelection();
+  if (!sel) return;
+  let str = sel.toString().trim();
+  if (!str) return;
+  console.log('Selection:', str);
+  let r = sel.getRangeAt(0);
+  highlightRange(r);
+  sel.empty();
+  bookmarks.push(str);
+  await saveLocalBookmarks(bookmarks);
 }
 
 async function saveLocalBookmarks(texts) {
@@ -168,16 +184,22 @@ async function pullRemoteBookmarks(href) {
   return bookmarks;
 }
 
+function escapeRegex(rtext) {
+  return RegExp.escape ? RegExp.escape(rtext) :
+    rtext.replace(/[}|{$^?)(.*+-]|\[|\]|\\|^./gm, (c) => '\\' + c);
+}
+
 function highlightBookmarks(bookmarks, bgcolor) {
   if (!bookmarks.length)
     return 0;
 
   let num = 0, len = 0, ts = Date.now();
-  let texts = bookmarks.join('|');
-  let regex = new RegExp(texts, 'g');
+  let texts = bookmarks.map(escapeRegex);
+  let rtext = texts.join('|').replace(/\s/gm, '\\s');
+  let regex = new RegExp(rtext, 'gm');
   let ranges = [];
 
-  console.log('Bookmarks:', texts);
+  console.log('Bookmarks:', regex);
 
   enumNodes(document.body, (range) => {
     num++;
