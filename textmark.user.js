@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name        TextMark
 // @match       *://*/*
-// @grant       none
-// @version     1.3
+// @grant       GM.setValue
+// @grant       GM.getValue
+// @version     1.4
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
@@ -104,10 +105,10 @@ async function init() {
     console.debug('Text anchor:', url + '');
   });*/
 
-  let bookmarks = pullLocalBookmarks();
+  let bookmarks = await pullLocalBookmarks();
   let highlights = 0;
 
-  link.onclick = () => {
+  link.onclick = async () => {
     try {
       //navigator.clipboard?.writeText(link.href);
       let sel = document.getSelection();
@@ -115,12 +116,12 @@ async function init() {
       let str = sel.toString().trim();
       if (!str) return;
       console.log('Selection:', str);
-      bookmarks.push(str);
-      saveLocalBookmarks(bookmarks);
       let r = sel.getRangeAt(0);
       highlightRange(r);
       sel.empty();
       setLinkText(++highlights);
+      bookmarks.push(str);
+      await saveLocalBookmarks(bookmarks);
     } catch (e) {
       setLinkText('!', 'data:,' + encodeURIComponent(e + ''));
       console.error(e);
@@ -139,12 +140,12 @@ async function init() {
   setLinkText(highlights);
 }
 
-function saveLocalBookmarks(texts) {
-  localStorage[LSID] = texts.join('|');
+async function saveLocalBookmarks(texts) {
+  await GM.setValue(LSID, texts.join('|'));
 }
 
-function pullLocalBookmarks() {
-  let texts = localStorage[LSID];
+async function pullLocalBookmarks() {
+  let texts = await GM.getValue(LSID);
   return texts ? texts.split('|') : [];
 }
 
@@ -152,9 +153,10 @@ async function pullRemoteBookmarks(href) {
   let bookmarks = [];
   let url = href + '/' + LSID;
   console.log('Pulling remote bookmarks:', url);
+  //let res = await fetch(url, {method:'HEAD'});
+  //if (res.status != 200) return [];
   let res = await fetch(url);
-  if (res.status != 200)
-    return [];
+  if (res.status != 200) return [];
   let text = await res.text();
   //console.log('parsing:', text);
   let m, regex = /^>.+$/gm;
