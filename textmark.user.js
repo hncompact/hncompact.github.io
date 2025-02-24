@@ -3,7 +3,7 @@
 // @match       *://*/*
 // @grant       GM.setValue
 // @grant       GM.getValue
-// @version     1.7
+// @version     1.8
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
@@ -30,6 +30,7 @@ const CUSTOM_CSS = `
   }
 
   .text-frag-ui {
+    all: revert;
     z-index: 1000;
     position: fixed;
     font-size: 1vh;
@@ -59,9 +60,11 @@ const CUSTOM_CSS = `
 
   .text-frag-ui a span {
     position: absolute;
+    font-family: monospace;
   }
 
   .text-frag-ui-mark {
+    all: revert;
     background: #ff0;
     border-top-left-radius: 3pt;
     border-bottom-right-radius: 3pt;
@@ -185,7 +188,7 @@ async function pullRemoteBookmarks(href) {
 }
 
 function escapeRegex(rtext) {
-  return rtext.replace(/[}|{$^?)(.*+-]|\[|\]|\\|^./gm, (c) => '\\' + c);
+  return rtext.replace(/[}|{$^?)(.*+-]|\[|\]|\\/gm, (c) => '\\' + c);
 }
 
 function highlightBookmarks(bookmarks, bgcolor) {
