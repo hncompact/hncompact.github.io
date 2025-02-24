@@ -2,29 +2,29 @@
 // @name        TextMark
 // @match       *://*/*
 // @grant       none
-// @version     1.2
+// @version     1.3
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
 // @run-at      document-end
 // ==/UserScript==
 
-let BOOKMARK_SVG = `
+const WWW_SOURCES = [
+  ['#f0f', 'https://raw.githubusercontent.com/hncompact/hncompact.github.io/refs/heads/main/textmark2'],
+];
+
+const BOOKMARK_SVG = `
   <svg fill="#fc0" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      viewBox="0 0 463.273 463.273" xml:space="preserve">
-  <g>
-    <g>
-      <path d="M313.874,0H149.398c-16.28,0-29.477,13.197-29.476,29.477v422.368c0,4.532,2.679,8.637,6.827,10.461
-        c4.148,1.824,8.983,1.025,12.324-2.038l84.84-77.788c4.369-4.006,11.076-4.006,15.446,0l84.84,77.788
-        c3.34,3.063,8.175,3.863,12.324,2.038s6.827-5.929,6.827-10.461h0.001V29.477C343.351,13.197,330.154,0,313.874,0z"/>
-    </g>
-  </g>
+    <path d="M313.874,0H149.398c-16.28,0-29.477,13.197-29.476,29.477v422.368c0,4.532,2.679,8.637,6.827,10.461
+      c4.148,1.824,8.983,1.025,12.324-2.038l84.84-77.788c4.369-4.006,11.076-4.006,15.446,0l84.84,77.788
+      c3.34,3.063,8.175,3.863,12.324,2.038s6.827-5.929,6.827-10.461h0.001V29.477C343.351,13.197,330.154,0,313.874,0z"/>
   </svg>
 `;
 
-let CUSTOM_CSS = `
+const CUSTOM_CSS = `
   .text-frag-ui-svg {
-    background-image: url("data:image/svg+xml,${encodeURIComponent(BOOKMARK_SVG)}");
+    background-image: url("data:image/svg+xml,{encodeURIComponent(BOOKMARK_SVG)}");
     background-repeat: no-repeat;
   }
 
@@ -54,20 +54,35 @@ let CUSTOM_CSS = `
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+  }
+
+  .text-frag-ui a span {
+    position: absolute;
   }
 
   .text-frag-ui-mark {
-    background: #ff06;
+    background: #ff0;
+    border-top-left-radius: 3pt;
+    border-bottom-right-radius: 3pt;
   }
 `;
 
-const LSID = location.pathname + location.search;
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
+const LSID = location.hostname + location.pathname.replace(/\/+$/, '') + location.search.replace(/\?+$/, '');
 
-init();
+init().catch((e) => {
+  setLinkText('!', 'data:,' + encodeURIComponent(e + ''));
+  console.error(e);
+});
 
-function init() {
+function setLinkText(text, href) {
+  $('.text-frag-ui a span').textContent = text;
+  if (href) $('.text-frag-ui a').href = href;
+}
+
+async function init() {
   let style = document.createElement('style');
   style.append(CUSTOM_CSS);
   document.head.append(style);
@@ -75,47 +90,91 @@ function init() {
   let uiroot = document.createElement('div');
   uiroot.className = 'text-frag-ui';
   let link = document.createElement('a');
-  link.className = 'text-frag-ui-svg';
-  link.textContent = '↺';
+  link.innerHTML = BOOKMARK_SVG;
+  let span = document.createElement('span');
+  link.append(span);
   uiroot.append(link);
   document.body.append(uiroot);
+  setLinkText('↺');
 
-  let url = new URL(location.href);
-
+  /*let url = new URL(location.href);
   document.addEventListener('selectionchange', () => {
     let sel = document.getSelection();
     url.hash = ':~:text=' + encodeURIComponent(sel.toString().trim());
-    //link.href = url + '';
-    //console.debug('Text anchor:', url + '');
-  });
+    console.debug('Text anchor:', url + '');
+  });*/
+
+  let bookmarks = pullLocalBookmarks();
+  let highlights = 0;
 
   link.onclick = () => {
-    //navigator.clipboard?.writeText(link.href);
-    let sel = document.getSelection();
-    if (!sel) return;
-    let str = sel.toString().trim();
-    if (!str) return;
-    console.log('Selection:', str);
-    let texts = localStorage[LSID] || '';
-    texts = texts + (texts ? '|' : '') + str;
-    localStorage[LSID] = texts;
-    console.log('Updated bookmarks:', localStorage[LSID]);
-    let r = sel.getRangeAt(0);
-    highlightRange(r);
-    sel.empty();
+    try {
+      //navigator.clipboard?.writeText(link.href);
+      let sel = document.getSelection();
+      if (!sel) return;
+      let str = sel.toString().trim();
+      if (!str) return;
+      console.log('Selection:', str);
+      bookmarks.push(str);
+      saveLocalBookmarks(bookmarks);
+      let r = sel.getRangeAt(0);
+      highlightRange(r);
+      sel.empty();
+      setLinkText(++highlights);
+    } catch (e) {
+      setLinkText('!', 'data:,' + encodeURIComponent(e + ''));
+      console.error(e);
+    }
   };
 
-  let num = highlightBookmarks();
-  link.textContent = num;
+  highlights = highlightBookmarks(bookmarks);
+  for (let [bgcolor, href] of WWW_SOURCES) {
+    try {
+      let texts = await pullRemoteBookmarks(href);
+      highlights += highlightBookmarks(texts, bgcolor);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+  setLinkText(highlights);
 }
 
-function highlightBookmarks() {
+function saveLocalBookmarks(texts) {
+  localStorage[LSID] = texts.join('|');
+}
+
+function pullLocalBookmarks() {
+  let texts = localStorage[LSID];
+  return texts ? texts.split('|') : [];
+}
+
+async function pullRemoteBookmarks(href) {
+  let bookmarks = [];
+  let url = href + '/' + LSID;
+  console.log('Pulling remote bookmarks:', url);
+  let res = await fetch(url);
+  if (res.status != 200)
+    return [];
+  let text = await res.text();
+  //console.log('parsing:', text);
+  let m, regex = /^>.+$/gm;
+  while (m = regex.exec(text)) {
+    let s = m[0].slice(1).trim();
+    if (s) bookmarks.push(s);
+  }
+  //console.log('parsed:', bookmarks);
+  return bookmarks;
+}
+
+function highlightBookmarks(bookmarks, bgcolor) {
+  if (!bookmarks.length)
+    return 0;
+
   let num = 0, len = 0, ts = Date.now();
-  let texts = localStorage[LSID] || '';
+  let texts = bookmarks.join('|');
   let regex = new RegExp(texts, 'g');
   let ranges = [];
 
-  if (!texts) return 0;
   console.log('Bookmarks:', texts);
 
   enumNodes(document.body, (range) => {
@@ -126,10 +185,17 @@ function highlightBookmarks() {
   });
 
   for (let r of ranges)
-    highlightRange(r);
+    highlightRange(r, bgcolor);
 
   console.log('enumNodes:', Date.now() - ts, 'ms', num, 'nodes', len, 'chars');
   return ranges.length;
+}
+
+function highlightRange(range, bgcolor) {
+  let mark = document.createElement("mark");
+  mark.className = 'text-frag-ui-mark';
+  if (bgcolor) mark.style.background = bgcolor;
+  range.surroundContents(mark);
 }
 
 function enumNodes(root, callback) {
@@ -164,8 +230,3 @@ function findTexts(range, regex, res) {
   return n;
 }
 
-function highlightRange(range) {
-  let mark = document.createElement("mark");
-  mark.className = 'text-frag-ui-mark';
-  range.surroundContents(mark);
-}
