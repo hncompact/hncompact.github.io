@@ -3,7 +3,7 @@
 // @match       *://*/*
 // @grant       GM.setValue
 // @grant       GM.getValue
-// @version     1.6
+// @version     1.7
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
@@ -185,8 +185,7 @@ async function pullRemoteBookmarks(href) {
 }
 
 function escapeRegex(rtext) {
-  return RegExp.escape ? RegExp.escape(rtext) :
-    rtext.replace(/[}|{$^?)(.*+-]|\[|\]|\\|^./gm, (c) => '\\' + c);
+  return rtext.replace(/[}|{$^?)(.*+-]|\[|\]|\\|^./gm, (c) => '\\' + c);
 }
 
 function highlightBookmarks(bookmarks, bgcolor) {
