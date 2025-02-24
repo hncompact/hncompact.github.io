@@ -3,7 +3,7 @@
 // @match       *://*/*
 // @grant       GM.setValue
 // @grant       GM.getValue
-// @version     1.9
+// @version     1.10
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
@@ -30,7 +30,7 @@ const CUSTOM_CSS = `
     position: fixed;
     display: flex;
     flex-direction: row;
-    font-size: 2vh;
+    font-size: 1.5vh;
     right: 2vh;
     bottom: 3vh;
   }
@@ -82,6 +82,7 @@ const LSID = location.hostname + location.pathname.replace(/\/+$/, '') + locatio
 
 let bookmarks = [];
 let highlights = 0;
+let nextBookmarkId = 0;
 
 init().catch((e) => {
   setLinkText('!', 'data:,' + encodeURIComponent(e + ''));
@@ -111,20 +112,31 @@ async function init() {
 
   document.addEventListener('selectionchange', () => {
     let sel = document.getSelection();
-    if (sel.toString() != '')
+    if (sel.toString() != '') {
       clearSelectedBookmark();
+      setLinkText('+');
+    } else {
+      setLinkText(highlights);
+    }
   });
 
   bookmarks = await pullLocalBookmarks();
 
-  link.onclick = async () => {
-    let s = $('.text-frag-ui-mark-selected');
-    if (s) {
-      removeSelectedBookmark(s);
-    } else {
-      highlights++;
-      await addSelectionToBookmarks(bookmarks);
+  link.onclick = () => {
+    if ($('.text-frag-ui-mark-selected')) {
+      removeSelectedBookmark();
+      return;
     }
+
+    let sel = document.getSelection();
+    if (sel.toString() != '') {
+      addSelectionToBookmarks(bookmarks);
+      return;
+    }
+
+    let marks = $$('.text-frag-ui-mark');
+    let mark = marks[nextBookmarkId++ % marks.length];
+    if (mark) mark.scrollIntoView();
   };
 
   for (let [bgcolor, href] of WWW_SOURCES) {
@@ -147,7 +159,8 @@ async function init() {
   });
 }
 
-function removeSelectedBookmark(t) {
+function removeSelectedBookmark(t = $('.text-frag-ui-mark-selected')) {
+  if (!t) return;
   let str = t.textContent;
   highlights--;
   clearSelectedBookmark(t);
@@ -208,7 +221,8 @@ async function addSelectionToBookmarks(bookmarks) {
   let r = sel.getRangeAt(0);
   sel.empty();
   let m = highlightRange(r);
-  toggleSelectedBookmark(m);
+  highlights++;
+  //toggleSelectedBookmark(m);
   bookmarks.push(str);
   await saveLocalBookmarks(bookmarks);
 }
