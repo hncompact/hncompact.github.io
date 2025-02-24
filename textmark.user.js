@@ -3,7 +3,7 @@
 // @match       *://*/*
 // @grant       GM.setValue
 // @grant       GM.getValue
-// @version     1.8
+// @version     1.9
 // @author      none
 // @description Basic UI to create text bookmarks.
 // @license     MIT
@@ -14,9 +14,9 @@ const WWW_SOURCES = [
   ['#f0f', 'https://raw.githubusercontent.com/hncompact/hncompact.github.io/refs/heads/main/textmark2'],
 ];
 
-const BOOKMARK_SVG = `
-  <svg fill="#fc0" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     viewBox="0 0 463.273 463.273" xml:space="preserve">
+const SVG_BOOKMARK = `
+  <svg fill="#fc0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="100 0 263.273 463.273" xml:space="preserve">
     <path d="M313.874,0H149.398c-16.28,0-29.477,13.197-29.476,29.477v422.368c0,4.532,2.679,8.637,6.827,10.461
       c4.148,1.824,8.983,1.025,12.324-2.038l84.84-77.788c4.369-4.006,11.076-4.006,15.446,0l84.84,77.788
       c3.34,3.063,8.175,3.863,12.324,2.038s6.827-5.929,6.827-10.461h0.001V29.477C343.351,13.197,330.154,0,313.874,0z"/>
@@ -24,28 +24,21 @@ const BOOKMARK_SVG = `
 `;
 
 const CUSTOM_CSS = `
-  .text-frag-ui-svg {
-    background-image: url("data:image/svg+xml,{encodeURIComponent(BOOKMARK_SVG)}");
-    background-repeat: no-repeat;
-  }
-
   .text-frag-ui {
     all: revert;
     z-index: 1000;
     position: fixed;
-    font-size: 1vh;
-    right: 0.5vh;
-    bottom: 1vh;
-    opacity: 0.5;
-    transition: all 150ms;
-  }
-
-  .text-frag-ui:hover {
-    opacity: 1;
+    display: flex;
+    flex-direction: row;
+    font-size: 2vh;
+    right: 2vh;
+    bottom: 3vh;
   }
 
   .text-frag-ui a {
     user-select: none;
+    opacity: 0.5;
+    transition: all 150ms;
     color: #000;
     font-weight: bold;
     cursor: pointer;
@@ -58,6 +51,10 @@ const CUSTOM_CSS = `
     position: relative;
   }
 
+  .text-frag-ui a:hover {
+    opacity: 1;
+  }
+
   .text-frag-ui a span {
     position: absolute;
     font-family: monospace;
@@ -65,15 +62,26 @@ const CUSTOM_CSS = `
 
   .text-frag-ui-mark {
     all: revert;
-    background: #ff0;
-    border-top-left-radius: 3pt;
-    border-bottom-right-radius: 3pt;
+    background: #ff08;
+    cursor: pointer;
+  }
+
+  .text-frag-ui-mark-selected {
+    background: #fc0;
+  }
+
+  .text-frag-ui-delete svg {
+    fill: #f40;
+    opacity: 1;
   }
 `;
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 const LSID = location.hostname + location.pathname.replace(/\/+$/, '') + location.search.replace(/\?+$/, '');
+
+let bookmarks = [];
+let highlights = 0;
 
 init().catch((e) => {
   setLinkText('!', 'data:,' + encodeURIComponent(e + ''));
@@ -93,7 +101,7 @@ async function init() {
   let uiroot = document.createElement('div');
   uiroot.className = 'text-frag-ui';
   let link = document.createElement('a');
-  link.innerHTML = BOOKMARK_SVG;
+  link.innerHTML = SVG_BOOKMARK;
   let span = document.createElement('span');
   link.append(span);
   uiroot.append(link);
@@ -101,30 +109,28 @@ async function init() {
 
   setLinkText('↺');
 
-  /*let url = new URL(location.href);
   document.addEventListener('selectionchange', () => {
     let sel = document.getSelection();
-    url.hash = ':~:text=' + encodeURIComponent(sel.toString().trim());
-    console.debug('Text anchor:', url + '');
-  });*/
+    if (sel.toString() != '')
+      clearSelectedBookmark();
+  });
 
-  let bookmarks = await pullLocalBookmarks();
-  let highlights = 0;
+  bookmarks = await pullLocalBookmarks();
 
   link.onclick = async () => {
-    try {
+    let s = $('.text-frag-ui-mark-selected');
+    if (s) {
+      removeSelectedBookmark(s);
+    } else {
+      highlights++;
       await addSelectionToBookmarks(bookmarks);
-      setLinkText(++highlights);
-    } catch (e) {
-      setLinkText('!', 'data:,' + encodeURIComponent(e + ''));
-      console.error(e);
     }
   };
 
   for (let [bgcolor, href] of WWW_SOURCES) {
     try {
       let texts = await pullRemoteBookmarks(href);
-      highlights += highlightBookmarks(texts, bgcolor);
+      highlights += highlightBookmarks(texts, bgcolor, true);
     } catch (e) {
       console.warn(e);
     }
@@ -135,6 +141,53 @@ async function init() {
 
   if (highlights.length)
     uiroot.style.opacity = 1;
+
+  document.body.addEventListener('click', (e) => {
+    toggleSelectedBookmark(e.target);
+  });
+}
+
+function removeSelectedBookmark(t) {
+  let str = t.textContent;
+  highlights--;
+  clearSelectedBookmark(t);
+  let r = document.createRange();
+  r.selectNodeContents(t);
+  t.replaceWith(r);
+
+  let regex = new RegExp('^' + escapeRegex(str) + '$');
+  for (let i = 0; i < bookmarks.length; i++)
+    if (regex.test(bookmarks[i]))
+      bookmarks[i] = '';
+  bookmarks = bookmarks.filter(x => !!x);
+  saveLocalBookmarks(bookmarks);
+}
+
+function toggleSelectedBookmark(t) {
+  if (!t.classList.contains('text-frag-ui-mark'))
+      return;
+
+  let s = $('.text-frag-ui-mark-selected');
+
+  if (!s) {
+    setSelectedBookmark(t);
+  } else {
+    clearSelectedBookmark(s);
+    if (s != t) setSelectedBookmark(t);
+  }
+}
+
+function setSelectedBookmark(t) {
+  t.classList.add('text-frag-ui-mark-selected');
+  setLinkText('×');
+  $('.text-frag-ui').classList.add('text-frag-ui-delete');
+}
+
+function clearSelectedBookmark(t = $('.text-frag-ui-mark-selected')) {
+  if (!t) return;
+  t.classList.remove('text-frag-ui-mark-selected');
+  setLinkText(highlights);
+  $('.text-frag-ui').classList.remove('text-frag-ui-delete');
 }
 
 function serializeBookmarksToDataURI(bookmarks) {
@@ -153,8 +206,9 @@ async function addSelectionToBookmarks(bookmarks) {
   if (!str) return;
   console.log('Selection:', str);
   let r = sel.getRangeAt(0);
-  highlightRange(r);
   sel.empty();
+  let m = highlightRange(r);
+  toggleSelectedBookmark(m);
   bookmarks.push(str);
   await saveLocalBookmarks(bookmarks);
 }
@@ -165,7 +219,7 @@ async function saveLocalBookmarks(texts) {
 
 async function pullLocalBookmarks() {
   let texts = await GM.getValue(LSID);
-  return texts ? texts.split('|') : [];
+  return texts ? texts.split('|').filter(t => !!t.trim()) : [];
 }
 
 async function pullRemoteBookmarks(href) {
@@ -188,7 +242,7 @@ async function pullRemoteBookmarks(href) {
 }
 
 function escapeRegex(rtext) {
-  return rtext.replace(/[}|{$^?)(.*+-]|\[|\]|\\/gm, (c) => '\\' + c);
+  return rtext.replace(/[}|{$^?)(.*+-]|\[|\]|\\/gm, (c) => '\\' + c).replace(/\s/gm, '\\s');
 }
 
 function highlightBookmarks(bookmarks, bgcolor) {
@@ -197,7 +251,7 @@ function highlightBookmarks(bookmarks, bgcolor) {
 
   let num = 0, len = 0, ts = Date.now();
   let texts = bookmarks.map(escapeRegex);
-  let rtext = texts.join('|').replace(/\s/gm, '\\s');
+  let rtext = texts.join('|');
   let regex = new RegExp(rtext, 'gm');
   let ranges = [];
 
@@ -210,8 +264,8 @@ function highlightBookmarks(bookmarks, bgcolor) {
       findTexts(range, regex, ranges);
   });
 
-  for (let r of ranges)
-    highlightRange(r, bgcolor);
+  for (let i = 0; i < ranges.length; i++)
+    highlightRange(ranges[i], bgcolor);
 
   console.log('enumNodes:', Date.now() - ts, 'ms', num, 'nodes', len, 'chars');
   return ranges.length;
@@ -222,6 +276,7 @@ function highlightRange(range, bgcolor) {
   mark.className = 'text-frag-ui-mark';
   if (bgcolor) mark.style.background = bgcolor;
   range.surroundContents(mark);
+  return mark;
 }
 
 function enumNodes(root, callback) {
