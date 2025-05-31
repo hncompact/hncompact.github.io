@@ -2,7 +2,7 @@
 // @name        HN SuperCompact UI
 // @match       https://news.ycombinator.com/*
 // @grant       none
-// @version     1.13
+// @version     1.14
 // @author      hncompact
 // @description Makes the HN UI even more compact than it is now.
 // @license     MIT
@@ -28,9 +28,11 @@ let COMMS_CSS = `
   tr.comtr .votelinks center font { display:none }
   tr.comtr .votelinks center { min-width:1em }
   tr.comtr .votelinks a { display:none }
+  tr.comtr .reply a.downvote { display:none }
   tr.comtr .reply .expand:not(:empty) { margin-right:0.5em }
   tr.comtr .reply .expand { cursor:pointer; color:#fff; }
   tr.comtr .reply .expand b { font-weight:normal; color:#f60; }
+  tr.comtr .reply .expand i { font-style:normal; color:#6f0; }
   tr.comtr:not(.coll) .reply * { font-size:8pt }
   tr.comtr:not(.coll) .reply > p > *:not(.expand) { opacity:0.5 }
   tr.comtr.recent .votelinks center::before { content:'*'; color:#6f0 !important; }
@@ -58,12 +60,10 @@ function init() {
   switch (location.pathname) {
     case '/':
     case '/news':
-      console.debug('Compacting the list of posts...');
       document.head.insertAdjacentHTML('beforeend', POSTS_CSS);
       initPosts();
       break;
     case '/item':
-      console.debug('Compacting the list of comments...');
       document.head.insertAdjacentHTML('beforeend', COMMS_CSS);
       initComments();
       break;
@@ -108,6 +108,10 @@ function initPosts() {
 }
 
 function initComments() {
+  let postId = new URLSearchParams(location.search).get('id');
+  let lastVisit = +localStorage.getItem('lastseen' + postId);
+  localStorage.setItem('lastseen' + postId, Date.now()/1000|0);
+
   for (let tr of $$('tr.comtr')) {
     let ind = tr.querySelector('.ind');
     let d = +ind.getAttribute('indent') || 0;
@@ -119,7 +123,9 @@ function initComments() {
 
     for (let a of tr.querySelectorAll('.votelinks a')) {
       let va = a.querySelector('.votearrow');
-      a.textContent = va ? va.getAttribute('title') : '';
+      let type = va ? va.getAttribute('title') : '';
+      a.textContent = type;
+      a.classList.add(type);
       a.remove();
       reply.append(a, ' ');
     }
@@ -128,11 +134,12 @@ function initComments() {
     comhead.remove();
     reply.append(comhead);
 
-    let age = reply.querySelector('.age a');
+    let age = reply.querySelector('.age');
     if (age) {
-      let [time, units=''] = age.textContent.split(' ');
-      age.textContent = time + units[0];
-      if (units.match(/minute/))
+      let title = age.getAttribute('title');
+      let time = +title?.split(' ')[1];
+      //age.querySelector('a').textContent = time + units[0];
+      if (lastVisit > 0 && time > 0 && time > lastVisit)
         tr.classList.add('recent');
     }
 
@@ -163,6 +170,7 @@ function initComments() {
     let tr = stack[stack.length-1];
     tr.imm = tr.imm || 0;
     tr.tot = tr.tot || 0;
+    tr.new = tr.new || 0;
     let tr2 = tr.nextElementSibling;
     if (!tr2) break;
     let d = +tr.getAttribute('d') || 0;
@@ -178,12 +186,19 @@ function initComments() {
           let b = document.createElement('b');
           b.textContent = tr.imm;
           exp.append(tr.tot, ':', b);
+          if (tr.new > 0) {
+            let i = document.createElement('i');
+            i.textContent = tr.new;
+            exp.append(':', i);
+          }
         }
 
         tr0 = stack[stack.length-1];
+        // tr0 is the parent of tr
         if (tr0) {
           tr0.tot += tr.tot + 1;
           tr0.imm += +tr0.getAttribute('d') + 1 == +tr.getAttribute('d');
+          tr0.new += tr.new + tr.classList.contains('recent');
         }
       } while (tr0 && d2 <= tr0.getAttribute('d'));
     }
